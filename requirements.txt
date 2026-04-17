@@ -1,0 +1,7 @@
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+PyMySQL==1.1.0
+pymongo==4.5.0
+pandas==2.1.1
+Werkzeug==2.3.7
+dnspython==2.4.2
