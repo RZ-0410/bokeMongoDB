@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- 分类导航 -->
+<div class="category-nav mb-4 animate__animated animate__fadeInDown">
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('index') }}" class="btn btn-sm {% if not current_category %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            全部
+        </a>
+        {% for category in categories %}
+            <a href="{{ url_for('index', category=category.name) }}" 
+               class="btn btn-sm {% if current_category == category.name %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                {{ category.name }}
+            </a>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- 排序选项 -->
+<div class="sort-options mb-4 animate__animated animate__fadeInDown">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <span class="text-muted">排序方式:</span>
+            <div class="btn-group ms-2" role="group">
+                <a href="{{ url_for('index', sort='publish_time', order='desc', category=current_category) }}" 
+                   class="btn btn-sm {% if current_sort == 'publish_time' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+                    时间
+                </a>
+                <a href="{{ url_for('index', sort='like_count', order='desc', category=current_category) }}" 
+                   class="btn btn-sm {% if current_sort == 'like_count' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+                    点赞
+                </a>
+                <a href="{{ url_for('index', sort='comment_count', order='desc', category=current_category) }}" 
+                   class="btn btn-sm {% if current_sort == 'comment_count' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+                    评论
+                </a>
+                <a href="{{ url_for('index', sort='collect_count', order='desc', category=current_category) }}" 
+                   class="btn btn-sm {% if current_sort == 'collect_count' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+                    收藏
+                </a>
+                <a href="{{ url_for('index', sort='read_count', order='desc', category=current_category) }}" 
+                   class="btn btn-sm {% if current_sort == 'read_count' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+                    阅读
+                </a>
+                <a href="{{ url_for('index', sort='content_length', order='desc', category=current_category) }}" 
+                   class="btn btn-sm {% if current_sort == 'content_length' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+                    字数
+                </a>
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('index', sort=current_sort, order='desc', category=current_category) }}" 
+                   class="btn btn-sm {% if current_order == 'desc' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+                    从多到少
+                </a>
+                <a href="{{ url_for('index', sort=current_sort, order='asc', category=current_category) }}" 
+                   class="btn btn-sm {% if current_order == 'asc' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+                    从少到多
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 文章列表 -->
+<div id="articles-container">
+    {% if articles %}
+        <div class="row">
+            {% for article in articles %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card article-card animate__animated animate__fadeInUp" style="animation-delay: {{ loop.index0 * 0.1 }}s">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge bg-primary">{{ article.main_category }}</span>
+                                <small class="text-muted">{{ article.publish_time.strftime('%Y-%m-%d') }}</small>
+                            </div>
+                            
+                            <h5 class="card-title">
+                                <a href="{{ url_for('article_detail', article_id=article._id) }}" 
+                                   class="text-decoration-none text-dark">
+                                    {{ article.title }}
+                                </a>
+                            </h5>
+                            
+                            <p class="card-text text-muted small">
+                                <i class="bi bi-person"></i> {{ article.author }}
+                                <span class="ms-2">
+                                    <i class="bi bi-eye"></i> {{ article.read_count }}
+                                </span>
+                                <span class="ms-2">
+                                    <i class="bi bi-file-text"></i> {{ article.content_length or 0 }}字
+                                </span>
+                            </p>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex gap-3 text-muted small">
+                                    <span>
+                                        <i class="bi bi-heart"></i> {{ article.like_count }}
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-chat"></i> {{ article.comment_count }}
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-bookmark"></i> {{ article.collect_count }}
+                                    </span>
+                                </div>
+                                <span class="badge bg-secondary">{{ article.sub_category }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <p class="text-muted mt-3">暂无文章</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- 加载更多按钮 -->
+{% if articles %}
+    <div class="text-center mt-4">
+        <button class="btn btn-primary" onclick="loadMoreArticles()">
+            <i class="bi bi-arrow-down-circle"></i> 加载更多
+        </button>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 刷新推荐功能
+function refreshRecommendations() {
+    showLoading();
+    
+    fetch('/refresh')
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.status === 'success') {
+                // 更新文章列表
+                updateArticlesList(data.articles);
+                showToast('推荐已刷新', 'success');
+            } else {
+                showToast('刷新失败', 'error');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('网络错误', 'error');
+        });
+}
+
+// 更新文章列表
+function updateArticlesList(articles) {
+    const container = document.getElementById('articles-container');
+    let html = '<div class="row">';
+    
+    articles.forEach((article, index) => {
+        html += `
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card article-card animate__animated animate__fadeInUp" style="animation-delay: ${index * 0.1}s">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-primary">${article.main_category}</span>
+                            <small class="text-muted">${new Date(article.publish_time).toLocaleDateString()}</small>
+                        </div>
+                        
+                        <h5 class="card-title">
+                            <a href="/article/${article._id}" class="text-decoration-none text-dark">
+                                ${article.title}
+                            </a>
+                        </h5>
+                        
+                        <p class="card-text text-muted small">
+                            <i class="bi bi-person"></i> ${article.author}
+                            <span class="ms-2">
+                                <i class="bi bi-eye"></i> ${article.read_count}
+                            </span>
+                            <span class="ms-2">
+                                <i class="bi bi-file-text"></i> ${article.content_length || 0}字
+                            </span>
+                        </p>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex gap-3 text-muted small">
+                                <span>
+                                    <i class="bi bi-heart"></i> ${article.like_count}
+                                </span>
+                                <span>
+                                    <i class="bi bi-chat"></i> ${article.comment_count}
+                                </span>
+                                <span>
+                                    <i class="bi bi-bookmark"></i> ${article.collect_count}
+                                </span>
+                            </div>
+                            <span class="badge bg-secondary">${article.sub_category}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+    
+    // 添加滚动动画
+    addScrollAnimations();
+}
+
+// 加载更多文章
+function loadMoreArticles() {
+    showToast('功能开发中...', 'info');
+}
+
+// 添加滚动动画
+function addScrollAnimations() {
+    const cards = document.querySelectorAll('.article-card');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    });
+    
+    cards.forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'all 0.3s ease';
+        observer.observe(card);
+    });
+}
+
+// 页面加载完成后执行
+document.addEventListener('DOMContentLoaded', function() {
+    addScrollAnimations();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}个人中心 - 博客{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="bi bi-person-circle"></i> 个人中心
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+                    <li class="breadcrumb-item active">个人中心</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- 用户信息卡片 -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center animate__animated animate__fadeInLeft">
+            <div class="card-body">
+                <div class="mb-3">
+                    <i class="bi bi-person-circle display-1 text-primary"></i>
+                </div>
+                <h4 class="card-title">{{ current_user.username }}</h4>
+                <p class="text-muted">{{ current_user.role|capitalize }}</p>
+                
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="fw-bold text-primary">{{ favorite_articles|length }}</div>
+                        <small class="text-muted">收藏文章</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="fw-bold text-success">{{ comments|length }}</div>
+                        <small class="text-muted">发表评论</small>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="text-start">
+                    <p class="mb-1">
+                        <i class="bi bi-phone text-muted"></i> 
+                        手机号: {{ current_user.phone or '未设置' }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <!-- 收藏的文章 -->
+        <div class="card mb-4 animate__animated animate__fadeInRight">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-bookmark-heart"></i> 我的收藏
+                    <span class="badge bg-secondary ms-2">{{ favorite_articles|length }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if favorite_articles %}
+                    <div class="row">
+                        {% for article in favorite_articles[:6] %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <a href="{{ url_for('article_detail', article_id=article._id) }}" 
+                                               class="text-decoration-none">
+                                                {{ article.title }}
+                                            </a>
+                                        </h6>
+                                        <div class="d-flex justify-content-between text-muted small">
+                                            <span>
+                                                <i class="bi bi-person"></i> {{ article.author }}
+                                            </span>
+                                            <span>
+                                                <i class="bi bi-heart"></i> {{ article.like_count }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if favorite_articles|length > 6 %}
+                        <div class="text-center">
+                            <a href="#" class="btn btn-outline-primary btn-sm">
+                                查看更多收藏
+                            </a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-bookmark display-4 text-muted"></i>
+                        <p class="text-muted mt-2">还没有收藏任何文章</p>
+                        <a href="{{ url_for('index') }}" class="btn btn-primary">
+                            <i class="bi bi-house"></i> 去首页看看
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 我的评论 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card animate__animated animate__fadeInUp">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-chat-dots"></i> 我的评论
+                    <span class="badge bg-secondary ms-2">{{ comments|length }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if comments %}
+                    <div class="list-group">
+                        {% for comment in comments[:10] %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <p class="mb-1">{{ comment.content }}</p>
+                                        <small class="text-muted">
+                                            {{ comment.publish_time.strftime('%Y-%m-%d %H:%M') }}
+                                        </small>
+                                    </div>
+                                    <a href="{{ url_for('article_detail', article_id=comment.article_id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        查看文章
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if comments|length > 10 %}
+                        <div class="text-center mt-3">
+                            <button class="btn btn-outline-primary btn-sm">
+                                查看更多评论
+                            </button>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-chat display-4 text-muted"></i>
+                        <p class="text-muted mt-2">还没有发表任何评论</p>
+                        <a href="{{ url_for('index') }}" class="btn btn-primary">
+                            <i class="bi bi-house"></i> 去评论文章
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 点赞过的文章 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card animate__animated animate__fadeInUp">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-heart"></i> 点赞过的文章
+                    <span class="badge bg-secondary ms-2">{{ liked_articles|length }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if liked_articles %}
+                    <div class="row">
+                        {% for article in liked_articles[:6] %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <a href="{{ url_for('article_detail', article_id=article._id) }}" 
+                                               class="text-decoration-none">
+                                                {{ article.title }}
+                                            </a>
+                                        </h6>
+                                        <div class="d-flex justify-content-between text-muted small">
+                                            <span>
+                                                <i class="bi bi-person"></i> {{ article.author }}
+                                            </span>
+                                            <span>
+                                                <i class="bi bi-heart-fill text-danger"></i> {{ article.like_count }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if liked_articles|length > 6 %}
+                        <div class="text-center">
+                            <a href="#" class="btn btn-outline-primary btn-sm">
+                                查看更多点赞
+                            </a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-heart display-4 text-muted"></i>
+                        <p class="text-muted mt-2">还没有点赞任何文章</p>
+                        <a href="{{ url_for('index') }}" class="btn btn-primary">
+                            <i class="bi bi-house"></i> 去发现好文章
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

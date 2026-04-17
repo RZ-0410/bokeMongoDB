@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}编辑文章 - {{ article.title }} - 博客{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card animate__animated animate__fadeInDown">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-pencil"></i> 编辑文章
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin_edit_article', article_id=article._id) }}">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">文章标题</label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               value="{{ article.title }}" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="main_category" class="form-label">主分类</label>
+                                <input type="text" class="form-control" id="main_category" name="main_category" 
+                                       value="{{ article.main_category }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="sub_category" class="form-label">子分类</label>
+                                <input type="text" class="form-control" id="sub_category" name="sub_category" 
+                                       value="{{ article.sub_category }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="content" class="form-label">文章内容</label>
+                        <textarea class="form-control" id="content" name="content" rows="10" 
+                                  required>{{ article.content }}</textarea>
+                        <small class="text-muted">文章内容至少需要50个字符</small>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check"></i> 保存修改
+                        </button>
+                        <a href="{{ url_for('admin_articles') }}" class="btn btn-secondary">
+                            <i class="bi bi-x"></i> 取消
+                        </a>
+                        <a href="{{ url_for('article_detail', article_id=article._id) }}" 
+                           class="btn btn-info" target="_blank">
+                            <i class="bi bi-eye"></i> 查看文章
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 字数统计
+document.getElementById('content').addEventListener('input', function() {
+    const content = this.value;
+    const length = content.length;
+    const minLength = 50;
+    
+    let small = this.nextElementSibling;
+    if (!small.classList.contains('text-muted')) {
+        small = document.createElement('small');
+        small.className = 'text-muted';
+        this.parentNode.insertBefore(small, this.nextSibling);
+    }
+    
+    small.textContent = `当前字数: ${length}，至少需要${minLength}个字符`;
+    
+    if (length < minLength) {
+        small.className = 'text-danger';
+    } else {
+        small.className = 'text-success';
+    }
+});
+</script>
+{% endblock %}

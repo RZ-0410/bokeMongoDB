@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}{{ article.title }} - 博客{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- 文章详情 -->
+        <article class="article-detail animate__animated animate__fadeIn">
+            <header class="mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('index', category=article.main_category) }}">{{ article.main_category }}</a></li>
+                        <li class="breadcrumb-item active">{{ article.sub_category }}</li>
+                    </ol>
+                </nav>
+                
+                <h1 class="display-5 fw-bold mb-3">{{ article.title }}</h1>
+                
+                <div class="d-flex align-items-center text-muted mb-3">
+                    <i class="bi bi-person-circle me-2"></i>
+                    <span class="me-4">{{ article.author }}</span>
+                    
+                    <i class="bi bi-calendar me-2"></i>
+                    <span class="me-4">{{ article.publish_time.strftime('%Y-%m-%d %H:%M') }}</span>
+                    
+                    <i class="bi bi-eye me-2"></i>
+                    <span>{{ article.read_count }}</span>
+                </div>
+                
+                <div class="d-flex gap-2 mb-3">
+                    <span class="badge bg-primary">{{ article.main_category }}</span>
+                    <span class="badge bg-secondary">{{ article.sub_category }}</span>
+                </div>
+            </header>
+            
+            <div class="article-content bg-light p-4 rounded mb-4">
+                <p class="lead">{{ article.content }}</p>
+                <p class="text-muted small">
+                    <i class="bi bi-file-text"></i> 字数: {{ article.content_length or 0 }}
+                </p>
+            </div>
+            
+            <div class="article-actions d-flex justify-content-center gap-3 mb-4">
+                <button class="btn btn-lg {% if user_liked %}btn-danger{% else %}btn-outline-danger{% endif %}" 
+                        onclick="toggleLike('article', '{{ article._id }}')">
+                    <i class="bi bi-heart{% if user_liked %}fill{% endif %}"></i>
+                    <span id="article-like-count">{{ article.like_count }}</span>
+                </button>
+                
+                <button class="btn btn-lg {% if user_favorited %}btn-warning{% else %}btn-outline-warning{% endif %}" 
+                        onclick="toggleFavorite('{{ article._id }}')">
+                    <i class="bi bi-bookmark{% if user_favorited %}fill{% endif %}"></i>
+                    <span id="article-collect-count">{{ article.collect_count }}</span>
+                </button>
+                
+                <button class="btn btn-lg btn-outline-primary" onclick="shareArticle()">
+                    <i class="bi bi-share"></i> 分享
+                </button>
+            </div>
+        </article>
+        
+        <!-- 评论区 -->
+        <section class="comments-section animate__animated animate__fadeInUp">
+            <h3 class="mb-4">
+                <i class="bi bi-chat-dots"></i> 评论 ({{ article.comment_count }})
+            </h3>
+            
+            {% if current_user.is_authenticated %}
+                <!-- 发表评论 -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <form id="comment-form" onsubmit="submitComment(event)">
+                            <input type="hidden" name="article_id" value="{{ article._id }}">
+                            <div class="mb-3">
+                                <textarea class="form-control" name="content" rows="3" 
+                                          placeholder="写下你的评论..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send"></i> 发表评论
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 
+                    请 <a href="{{ url_for('login') }}" class="alert-link">登录</a> 后发表评论
+                </div>
+            {% endif %}
+            
+            <!-- 评论列表 -->
+            <div id="comments-container">
+                {% for comment in comments %}
+                    {% include 'comment_item.html' %}
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="card mb-4 animate__animated animate__fadeInRight">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-badge"></i> 作者信息
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="avatar mb-3">
+                        <i class="bi bi-person-circle display-1 text-primary"></i>
+                    </div>
+                    <h5>{{ article.author }}</h5>
+                    <p class="text-muted">技术博主</p>
+                    <div class="d-flex justify-content-center gap-4 text-center">
+                        <div>
+                            <div class="fw-bold">{{ article.fans_count or 0 }}</div>
+                            <small class="text-muted">粉丝</small>
+                        </div>
+                        <div>
+                            <div class="fw-bold">{{ article.collect_count }}</div>
+                            <small class="text-muted">收藏</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4 animate__animated animate__fadeInRight" style="animation-delay: 0.2s">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-tags"></i> 相关标签
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-primary">{{ article.main_category }}</span>
+                        <span class="badge bg-secondary">{{ article.sub_category }}</span>
+                        <span class="badge bg-info">技术</span>
+                        <span class="badge bg-success">编程</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 点赞/取消点赞
+function toggleLike(type, targetId) {
+    {% if not current_user.is_authenticated %}
+        showToast('请先登录', 'warning');
+        return;
+    {% endif %}
+    
+    fetch(`/like/${type}/${targetId}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            if (type === 'article') {
+                const likeCount = document.getElementById('article-like-count');
+                const button = likeCount.parentElement;
+                
+                if (data.action === 'liked') {
+                    button.className = button.className.replace('btn-outline-danger', 'btn-danger');
+                    button.innerHTML = button.innerHTML.replace('bi-heart', 'bi-heartfill');
+                    likeCount.textContent = parseInt(likeCount.textContent) + 1;
+                    showToast('点赞成功', 'success');
+                } else {
+                    button.className = button.className.replace('btn-danger', 'btn-outline-danger');
+                    button.innerHTML = button.innerHTML.replace('bi-heartfill', 'bi-heart');
+                    likeCount.textContent = parseInt(likeCount.textContent) - 1;
+                    showToast('取消点赞', 'info');
+                }
+            }
+        } else {
+            showToast(data.message || '操作失败', 'error');
+        }
+    })
+    .catch(error => {
+        showToast('网络错误', 'error');
+    });
+}
+
+// 收藏/取消收藏
+function toggleFavorite(articleId) {
+    {% if not current_user.is_authenticated %}
+        showToast('请先登录', 'warning');
+        return;
+    {% endif %}
+    
+    fetch(`/favorite/${articleId}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const collectCount = document.getElementById('article-collect-count');
+            const button = collectCount.parentElement;
+            
+            if (data.action === 'favorited') {
+                button.className = button.className.replace('btn-outline-warning', 'btn-warning');
+                button.innerHTML = button.innerHTML.replace('bi-bookmark', 'bi-bookmarkfill');
+                collectCount.textContent = parseInt(collectCount.textContent) + 1;
+                showToast('收藏成功', 'success');
+            } else {
+                button.className = button.className.replace('btn-warning', 'btn-outline-warning');
+                button.innerHTML = button.innerHTML.replace('bi-bookmarkfill', 'bi-bookmark');
+                collectCount.textContent = parseInt(collectCount.textContent) - 1;
+                showToast('取消收藏', 'info');
+            }
+        } else {
+            showToast(data.message || '操作失败', 'error');
+        }
+    })
+    .catch(error => {
+        showToast('网络错误', 'error');
+    });
+}
+
+// 发表评论
+function submitComment(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    fetch('/comment', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // 清空表单
+            form.reset();
+            
+            // 刷新评论列表
+            location.reload();
+            
+            showToast('评论发表成功', 'success');
+        } else {
+            showToast(data.message || '评论失败', 'error');
+        }
+    })
+    .catch(error => {
+        showToast('网络错误', 'error');
+    });
+}
+
+// 回复评论
+function replyToComment(commentId, username) {
+    const form = document.getElementById('comment-form');
+    const textarea = form.querySelector('textarea');
+    const parentInput = form.querySelector('input[name="parent_id"]');
+    
+    if (!parentInput) {
+        const newInput = document.createElement('input');
+        newInput.type = 'hidden';
+        newInput.name = 'parent_id';
+        newInput.value = commentId;
+        form.appendChild(newInput);
+    } else {
+        parentInput.value = commentId;
+    }
+    
+    textarea.value = `@${username} `;
+    textarea.focus();
+    
+    // 滚动到评论框
+    form.scrollIntoView({ behavior: 'smooth' });
+}
+
+// 分享文章
+function shareArticle() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ article.title }}',
+            text: '{{ article.title }} - 博客',
+            url: window.location.href
+        });
+    } else {
+        // 复制链接到剪贴板
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            showToast('链接已复制到剪贴板', 'success');
+        });
+    }
+}
+
+// 页面加载完成后执行
+document.addEventListener('DOMContentLoaded', function() {
+    // 添加滚动动画
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    });
+    
+    document.querySelectorAll('.comment-card').forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'all 0.3s ease';
+        observer.observe(card);
+    });
+});
+</script>
+{% endblock %}

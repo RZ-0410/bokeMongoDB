@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}管理后台 - 博客{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="display-4 text-center mb-4">
+            <i class="bi bi-gear"></i> 管理后台
+        </h1>
+    </div>
+</div>
+
+<!-- 统计卡片 -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="stat-card text-center">
+            <div class="stat-number">{{ user_count }}</div>
+            <div class="text-uppercase">用户总数</div>
+            <i class="bi bi-people fs-1 mt-2"></i>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card text-center">
+            <div class="stat-number">{{ article_count }}</div>
+            <div class="text-uppercase">文章总数</div>
+            <i class="bi bi-file-text fs-1 mt-2"></i>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card text-center">
+            <div class="stat-number">{{ comment_count }}</div>
+            <div class="text-uppercase">评论总数</div>
+            <i class="bi bi-chat-dots fs-1 mt-2"></i>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card text-center">
+            <div class="stat-number">{{ log_count }}</div>
+            <div class="text-uppercase">日志总数</div>
+            <i class="bi bi-journal-text fs-1 mt-2"></i>
+        </div>
+    </div>
+</div>
+
+<!-- 快速操作 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightning"></i> 快速操作
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('admin_users') }}" class="btn btn-primary w-100">
+                            <i class="bi bi-people"></i> 用户管理
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('admin_articles') }}" class="btn btn-success w-100">
+                            <i class="bi bi-file-text"></i> 文章管理
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('admin_comments') }}" class="btn btn-info w-100">
+                            <i class="bi bi-chat-dots"></i> 评论管理
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('admin_logs') }}" class="btn btn-secondary w-100">
+                            <i class="bi bi-journal-text"></i> 日志管理
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 最近用户 -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-plus"></i> 最近注册用户
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_users %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>用户名</th>
+                                    <th>角色</th>
+                                    <th>注册时间</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in recent_users %}
+                                    <tr>
+                                        <td>{{ user.username }}</td>
+                                        <td>
+                                            <span class="badge {% if user.role == 'admin' %}bg-danger{% else %}bg-primary{% endif %}">
+                                                {{ user.role }}
+                                            </span>
+                                        </td>
+                                        <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">暂无数据</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- 最近日志 -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-activity"></i> 最近操作日志
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_logs %}
+                    <div class="timeline">
+                        {% for log in recent_logs %}
+                            <div class="timeline-item">
+                                <div class="d-flex justify-content-between">
+                                    <strong>{{ log.username or '未知用户' }}</strong>
+                                    <small class="text-muted">{{ log.timestamp.strftime('%H:%M') }}</small>
+                                </div>
+                                <p class="mb-1">{{ log.action }}</p>
+                                <small class="text-muted">{{ log.details }}</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">暂无数据</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 系统信息 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle"></i> 系统信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>应用名称:</strong> 人中博客系统</p>
+                        <p><strong>版本:</strong> v1.0.0</p>
+                        <p><strong>数据库:</strong> MongoDB + MySQL</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>框架:</strong> Flask</p>
+                        <p><strong>Python版本:</strong> 3.8+</p>
+                        <p><strong>部署时间:</strong> {{ deployment_time }}</p>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="text-center">
+                    <button class="btn btn-warning" onclick="backupDatabase()">
+                        <i class="bi bi-download"></i> 备份数据库
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 备份数据库
+function backupDatabase() {
+    if (!confirm('确定要备份数据库吗？')) {
+        return;
+    }
+    
+    showLoading();
+    
+    fetch('/admin/backup')
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.status === 'success') {
+                showToast('备份成功！文件路径: ' + data.backup_path, 'success');
+            } else {
+                showToast('备份失败: ' + (data.message || '未知错误'), 'error');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('网络错误', 'error');
+        });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}注册 - 博客{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card animate__animated animate__fadeInDown">
+            <div class="card-header text-center bg-success text-white">
+                <h3 class="mb-0">
+                    <i class="bi bi-person-plus"></i> 用户注册
+                </h3>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('register') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">用户名</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-person"></i>
+                            </span>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   placeholder="请输入用户名" required minlength="3" maxlength="20">
+                        </div>
+                        <small class="text-muted">用户名长度3-20个字符</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">密码</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-lock"></i>
+                            </span>
+                            <input type="password" class="form-control" id="password" name="password" 
+                                   placeholder="请输入密码" required minlength="6">
+                        </div>
+                        <small class="text-muted">密码长度至少6位</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">手机号（可选）</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-phone"></i>
+                            </span>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   placeholder="请输入手机号" pattern="^1[3-9]\d{9}$">
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-person-plus"></i> 注册
+                        </button>
+                    </div>
+                </form>
+                
+                <hr class="my-4">
+                
+                <div class="text-center">
+                    <p class="text-muted">已有账户？</p>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-box-arrow-in-right"></i> 立即登录
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
